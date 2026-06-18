@@ -27,12 +27,11 @@ class HashEmbeddingProvider(EmbeddingProvider):
 
     def _embed(self, text: str) -> list[float]:
         values = [0.0] * self.dimensions
-        tokens = [token for token in text.lower().split() if token] or [text]
+        tokens = _tokenize_for_hash_embedding(text)
         for token in tokens:
             digest = hashlib.sha256(token.encode("utf-8")).digest()
             index = int.from_bytes(digest[:4], "big") % self.dimensions
-            sign = 1.0 if digest[4] % 2 == 0 else -1.0
-            values[index] += sign
+            values[index] += 1.0
         norm = math.sqrt(sum(v * v for v in values)) or 1.0
         return [v / norm for v in values]
 
@@ -52,3 +51,13 @@ class OpenAICompatibleEmbeddingProvider(EmbeddingProvider):
             all_embeddings.extend(item.embedding for item in response.data)
         return all_embeddings
 
+
+def _tokenize_for_hash_embedding(text: str) -> list[str]:
+    normalized = text.lower().strip()
+    word_tokens = [token for token in normalized.split() if token]
+    if len(word_tokens) > 1:
+        return word_tokens
+    compact = "".join(normalized.split())
+    if len(compact) <= 2:
+        return [compact] if compact else [text]
+    return [compact[i : i + 2] for i in range(len(compact) - 1)]
