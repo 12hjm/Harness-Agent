@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import math
+from uuid import NAMESPACE_URL, uuid5
 from abc import ABC, abstractmethod
 
 from app.domain.models import DocumentChunk, RetrievedChunk
@@ -73,9 +74,10 @@ class QdrantVectorStore(VectorStore):
         await self.ensure_ready()
         points = [
             models.PointStruct(
-                id=chunk.id,
+                id=_qdrant_point_id(chunk.id),
                 vector=embedding,
                 payload={
+                    "chunk_id": chunk.id,
                     "document_id": chunk.document_id,
                     "source": chunk.source,
                     "chunk_index": chunk.chunk_index,
@@ -100,22 +102,28 @@ class QdrantVectorStore(VectorStore):
         for result in results:
             payload = result.payload or {}
             chunk = DocumentChunk(
-                id=str(result.id),
+                id=str(payload.get("chunk_id", result.id)),
                 document_id=str(payload.get("document_id", "")),
                 source=str(payload.get("source", "")),
                 chunk_index=int(payload.get("chunk_index", 0)),
                 text=str(payload.get("text", "")),
-                metadata={k: v for k, v in payload.items() if k not in {"document_id", "source", "chunk_index", "text"}},
+                metadata={
+                    k: v
+                    for k, v in payload.items()
+                    if k not in {"chunk_id", "document_id", "source", "chunk_index", "text"}
+                },
             )
             chunks.append(RetrievedChunk(chunk=chunk, score=float(result.score)))
         return chunks
 
     async def clear(self) -> None:
+        from qdrant_client.http import exceptions
+
+        try:
+            await self.client.delete_collection(collection_name=self.collection_name)
+        except (exceptions.UnexpectedResponse, ValueError):
+            pass
         await self.ensure_ready()
-        await self.client.delete(
-            collection_name=self.collection_name,
-            points_selector={"filter": {"must": []}},
-        )
 
 
 def _cosine_similarity(a: list[float], b: list[float]) -> float:
@@ -126,3 +134,6 @@ def _cosine_similarity(a: list[float], b: list[float]) -> float:
         return 0.0
     return numerator / (norm_a * norm_b)
 
+
+def _qdrant_point_id(chunk_id: str) -> str:
+    return str(uuid5(NAMESPACE_URL, f"rag-agent:{chunk_id}"))
