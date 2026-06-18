@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>对话助手</title>
+  <style>
+    :root {
+      --bg: #f6f3ee;
+      --panel: #ffffff;
+      --panel-soft: #faf8f4;
+      --text: #1f2933;
+      --muted: #6b7280;
+      --line: #e7ded2;
+      --accent: #0f766e;
+      --accent-strong: #115e59;
+      --accent-soft: #dff5f1;
+      --rose: #b4536a;
+      --shadow: 0 18px 45px rgba(31, 41, 51, 0.11);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Microsoft YaHei", "PingFang SC", Arial, sans-serif;
+      color: var(--text);
+      background:
+        linear-gradient(135deg, rgba(15, 118, 110, 0.12), transparent 32%),
+        linear-gradient(315deg, rgba(180, 83, 106, 0.12), transparent 30%),
+        var(--bg);
+    }
+
+    button,
+    textarea {
+      font: inherit;
+    }
+
+    button {
+      cursor: pointer;
+      border: 0;
+    }
+
+    .app {
+      display: grid;
+      grid-template-columns: 280px minmax(0, 1fr);
+      min-height: 100vh;
+    }
+
+    .sidebar {
+      display: flex;
+      flex-direction: column;
+      gap: 22px;
+      padding: 24px;
+      border-right: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.72);
+      backdrop-filter: blur(18px);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .brand-mark {
+      display: grid;
+      place-items: center;
+      width: 42px;
+      height: 42px;
+      flex: 0 0 auto;
+      border-radius: 8px;
+      color: #ffffff;
+      background: var(--accent);
+      box-shadow: 0 10px 22px rgba(15, 118, 110, 0.24);
+    }
+
+    .brand-mark svg {
+      width: 24px;
+      height: 24px;
+    }
+
+    .brand-text {
+      min-width: 0;
+    }
+
+    .brand-title {
+      margin: 0;
+      font-size: 18px;
+      line-height: 1.25;
+      font-weight: 800;
+    }
+
+    .brand-subtitle {
+      margin: 3px 0 0;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.4;
+    }
+
+    .new-chat {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
+      min-height: 44px;
+      padding: 10px 14px;
+      border-radius: 8px;
+      color: #ffffff;
+      background: var(--accent);
+      font-weight: 700;
+      transition: transform 0.18s ease, background 0.18s ease;
+    }
+
+    .new-chat:hover {
+      transform: translateY(-1px);
+      background: var(--accent-strong);
+    }
+
+    .section-label {
+      margin: 0 0 10px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0;
+    }
+
+    .history-list {
+      display: grid;
+      gap: 8px;
+    }
+
+    .history-item {
+      width: 100%;
+      padding: 11px 12px;
+      border-radius: 8px;
+      color: var(--text);
+      background: transparent;
+      text-align: left;
+      line-height: 1.35;
+      transition: background 0.18s ease, color 0.18s ease;
+    }
+
+    .history-item:hover,
+    .history-item.active {
+      background: var(--accent-soft);
+      color: var(--accent-strong);
+    }
+
+    .sidebar-footer {
+      margin-top: auto;
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel-soft);
+    }
+
+    .sidebar-footer strong {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 14px;
+    }
+
+    .sidebar-footer span {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.55;
+    }
+
+    .main {
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      min-width: 0;
+      min-height: 100vh;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      padding: 22px 34px;
+    }
+
+    .status {
+      display: inline-flex;
+      align-items: center;
+      gap: 9px;
+      color: var(--accent-strong);
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .status-dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 999px;
+      background: #22c55e;
+      box-shadow: 0 0 0 5px rgba(34, 197, 94, 0.12);
+    }
+
+    .tools {
+      display: flex;
+      gap: 10px;
+    }
+
+    .icon-button {
+      display: grid;
+      place-items: center;
+      width: 42px;
+      height: 42px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      color: var(--text);
+      background: rgba(255, 255, 255, 0.68);
+      transition: border-color 0.18s ease, transform 0.18s ease;
+    }
+
+    .icon-button:hover {
+      border-color: var(--accent);
+      transform: translateY(-1px);
+    }
+
+    .icon-button svg {
+      width: 20px;
+      height: 20px;
+    }
+
+    .hero {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 18px 34px 28px;
+    }
+
+    .hero-inner {
+      width: min(900px, 100%);
+    }
+
+    .welcome {
+      margin-bottom: 30px;
+    }
+
+    .eyebrow {
+      margin: 0 0 12px;
+      color: var(--rose);
+      font-size: 14px;
+      font-weight: 800;
+    }
+
+    h1 {
+      margin: 0;
+      max-width: 760px;
+      font-size: clamp(38px, 5vw, 68px);
+      line-height: 1.06;
+      letter-spacing: 0;
+    }
+
+    .lead {
+      max-width: 680px;
+      margin: 18px 0 0;
+      color: var(--muted);
+      font-size: 18px;
+      line-height: 1.75;
+    }
+
+    .prompt-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .prompt-card {
+      min-height: 138px;
+      padding: 18px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.74);
+      box-shadow: 0 10px 28px rgba(31, 41, 51, 0.06);
+      text-align: left;
+      transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+    }
+
+    .prompt-card:hover {
+      transform: translateY(-3px);
+      border-color: rgba(15, 118, 110, 0.45);
+      box-shadow: var(--shadow);
+    }
+
+    .prompt-icon {
+      display: grid;
+      place-items: center;
+      width: 34px;
+      height: 34px;
+      margin-bottom: 16px;
+      border-radius: 8px;
+      color: var(--accent-strong);
+      background: var(--accent-soft);
+    }
+
+    .prompt-icon svg {
+      width: 19px;
+      height: 19px;
+    }
+
+    .prompt-card strong {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 16px;
+      line-height: 1.35;
+    }
+
+    .prompt-card span {
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.55;
+    }
+
+    .composer-wrap {
+      padding: 0 34px 30px;
+    }
+
+    .composer {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      align-items: end;
+      gap: 12px;
+      width: min(900px, 100%);
+      margin: 0 auto;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.86);
+      box-shadow: var(--shadow);
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 58px;
+      max-height: 150px;
+      padding: 13px 14px;
+      resize: vertical;
+      border: 0;
+      outline: 0;
+      color: var(--text);
+      background: transparent;
+      line-height: 1.55;
+    }
+
+    .send-button {
+      display: grid;
+      place-items: center;
+      width: 48px;
+      height: 48px;
+      border-radius: 8px;
+      color: #ffffff;
+      background: var(--accent);
+      transition: transform 0.18s ease, background 0.18s ease;
+    }
+
+    .send-button:hover {
+      transform: translateY(-1px);
+      background: var(--accent-strong);
+    }
+
+    .send-button svg {
+      width: 21px;
+      height: 21px;
+    }
+
+    .toast {
+      position: fixed;
+      right: 24px;
+      bottom: 24px;
+      max-width: min(360px, calc(100vw - 48px));
+      padding: 13px 15px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      color: var(--text);
+      background: #ffffff;
+      box-shadow: var(--shadow);
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(12px);
+      transition: opacity 0.2s ease, transform 0.2s ease;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    @media (max-width: 880px) {
+      .app {
+        grid-template-columns: 1fr;
+      }
+
+      .sidebar {
+        display: none;
+      }
+
+      .topbar,
+      .hero,
+      .composer-wrap {
+        padding-left: 18px;
+        padding-right: 18px;
+      }
+
+      .prompt-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .prompt-card {
+        min-height: 112px;
+      }
+    }
+
+    @media (max-width: 540px) {
+      .topbar {
+        padding-top: 16px;
+        gap: 10px;
+      }
+
+      .tools {
+        gap: 8px;
+      }
+
+      .icon-button {
+        width: 38px;
+        height: 38px;
+      }
+
+      .hero {
+        align-items: start;
+        padding-top: 10px;
+      }
+
+      h1 {
+        font-size: 36px;
+      }
+
+      .lead {
+        font-size: 16px;
+      }
+
+      .composer {
+        grid-template-columns: 1fr;
+      }
+
+      .send-button {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar" aria-label="侧边栏">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none">
+            <path d="M5 8.5C5 6 7 4 9.5 4h5C17 4 19 6 19 8.5v3C19 14 17 16 14.5 16H12l-4.5 4v-4.2A4.5 4.5 0 0 1 5 11.5v-3Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+            <path d="M9 9h6M9 12h4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div class="brand-text">
+          <p class="brand-title">对话助手</p>
+          <p class="brand-subtitle">灵感、计划和答案的入口</p>
+        </div>
+      </div>
+
+      <button class="new-chat" type="button" id="newChat">
+        <span aria-hidden="true">+</span>
+        新建对话
+      </button>
+
+      <nav aria-label="历史对话">
+        <p class="section-label">最近对话</p>
+        <div class="history-list">
+          <button class="history-item active" type="button">今天的工作安排</button>
+          <button class="history-item" type="button">前端页面灵感</button>
+          <button class="history-item" type="button">学习计划整理</button>
+        </div>
+      </nav>
+
+      <div class="sidebar-footer">
+        <strong>快速开始</strong>
+        <span>输入你的问题，或者点选中间的建议，让助手先替你搭个思路。</span>
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div class="status">
+          <span class="status-dot" aria-hidden="true"></span>
+          助手在线
+        </div>
+        <div class="tools" aria-label="工具">
+          <button class="icon-button" type="button" title="搜索">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="m21 21-4.3-4.3M19 11a8 8 0 1 1-16 0 8 8 0 0 1 16 0Z" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </button>
+          <button class="icon-button" type="button" title="设置">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M12 15.5A3.5 3.5 0 1 0 12 8a3.5 3.5 0 0 0 0 7.5Z" stroke="currentColor" stroke-width="2"/>
+              <path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 0 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.6V21a2 2 0 0 1-4 0v-.1a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1A2 2 0 0 1 4.2 17l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.6-1H3a2 2 0 0 1 0-4h.1a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9L4.3 7A2 2 0 0 1 7 4.2l.1.1a1.7 1.7 0 0 0 1.9.3A1.7 1.7 0 0 0 10 3.1V3a2 2 0 0 1 4 0v.1a1.7 1.7 0 0 0 1 1.6 1.7 1.7 0 0 0 1.9-.3l.1-.1A2 2 0 0 1 19.8 7l-.1.1a1.7 1.7 0 0 0-.3 1.9 1.7 1.7 0 0 0 1.6 1h.1a2 2 0 0 1 0 4H21a1.7 1.7 0 0 0-1.6 1Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>
+            </svg>
+          </button>
+        </div>
+      </header>
+
+      <section class="hero" aria-labelledby="pageTitle">
+        <div class="hero-inner">
+          <div class="welcome">
+            <p class="eyebrow">AI CHAT ASSISTANT</p>
+            <h1 id="pageTitle">今天想聊什么？</h1>
+            <p class="lead">把想法、问题或任务放进来。它可以帮你梳理方向、生成草稿、拆解计划，也可以陪你把一个模糊念头慢慢说清楚。</p>
+          </div>
+
+          <div class="prompt-grid" aria-label="快捷提问">
+            <button class="prompt-card" type="button" data-prompt="帮我把今天要做的事情整理成一个清晰的待办清单。">
+              <span class="prompt-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none">
+                  <path d="M8 7h10M8 12h10M8 17h10M4 7h.01M4 12h.01M4 17h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+              </span>
+              <strong>整理任务</strong>
+              <span>把杂乱想法变成可执行步骤。</span>
+            </button>
+
+            <button class="prompt-card" type="button" data-prompt="我想做一个前端页面，请先帮我构思页面结构和视觉风格。">
+              <span class="prompt-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none">
+                  <path d="M4 5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5Z" stroke="currentColor" stroke-width="2"/>
+                  <path d="M8 8h8M8 12h5M8 16h7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+              </span>
+              <strong>构思页面</strong>
+              <span>先搭骨架，再决定细节和动效。</span>
+            </button>
+
+            <button class="prompt-card" type="button" data-prompt="请用简单的语言解释一个我不熟悉的概念，并给我一个例子。">
+              <span class="prompt-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none">
+                  <path d="M12 3a7 7 0 0 0-4 12.7V18h8v-2.3A7 7 0 0 0 12 3Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                  <path d="M9 22h6M10 18v4M14 18v4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+              </span>
+              <strong>解释概念</strong>
+              <span>用更轻松的方式理解新知识。</span>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <section class="composer-wrap" aria-label="消息输入">
+        <form class="composer" id="chatForm">
+          <textarea id="messageInput" placeholder="输入消息，开始一段新对话..." aria-label="输入消息"></textarea>
+          <button class="send-button" type="submit" title="发送">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M22 2 11 13" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="m22 2-7 20-4-9-9-4 20-7Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+            </svg>
+          </button>
+        </form>
+      </section>
+    </main>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    const input = document.getElementById("messageInput");
+    const toast = document.getElementById("toast");
+    const form = document.getElementById("chatForm");
+    const newChat = document.getElementById("newChat");
+    let toastTimer;
+
+    function showToast(message) {
+      toast.textContent = message;
+      toast.classList.add("show");
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => toast.classList.remove("show"), 2200);
+    }
+
+    document.querySelectorAll(".prompt-card").forEach((card) => {
+      card.addEventListener("click", () => {
+        input.value = card.dataset.prompt;
+        input.focus();
+      });
+    });
+
+    form.addEventListener("submit", (event) => {
+      event.preventDefault();
+      const message = input.value.trim();
+
+      if (!message) {
+        showToast("先输入一句想聊的话吧。");
+        input.focus();
+        return;
+      }
+
+      showToast("已准备开始对话：" + message);
+    });
+
+    newChat.addEventListener("click", () => {
+      input.value = "";
+      input.focus();
+      showToast("新的对话已经准备好了。");
+    });
+  </script>
+</body>
+</html>
